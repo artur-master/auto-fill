@@ -2,31 +2,59 @@ import React,{useState,useEffect,useMemo} from "react"
 
 import { Style } from "./Manager.styles";
 import Layout from "../../common/Layout/layout.component";
+import CreateDay from "./CreateDay/CreateDay.component";
 import PreDetail from "./PreDetail/PreDetail.component";
 import InputDetail from "./InputDetail/InputDetail.component";
+import {StepName} from './Constant'
+
+import {Container} from '../../Utils/Container'
+
 function Manager(){
-    const [cstep,setCstep] = useState(0);
-    const [cinfo,setCinfo] = useState({})
-    const start = (info) =>{
-        console.log(info)
-        setCinfo(info)
-        setCstep(1);
+    const [currentStep,setCurrentStep] = useState(StepName.CreateDay);
+    const [currentDate,setCurrentDate] = useState(Date.now())
+    const [currentPersonInfo,setCurrentPersonInfo] = useState({})
+    const [completedList,setCompletedList] = useState([])
+
+    useEffect(()=>{
+        setCompletedList([])
+    },[currentDate])
+    const startInput = (pinfo) =>{
+        //console.log(pinfo)
+        setCurrentPersonInfo(pinfo)
+        setCurrentStep(StepName.InputInfo);
     }
+    
     return(
-        <Style.Container>
+        <div>
             <Layout>
-                <Style.Main>
-                    <Style.Content>
-                        {cstep == 0 && (
-                            <PreDetail start={start}/>
+                {/* <Style.Main>
+                    <Style.Content> */}
+                        {currentStep == StepName.CreateDay && (
+                            <CreateDay setCurrentDate={setCurrentDate} setCurrentStep={setCurrentStep}/>
                         )}
-                        {cstep == 1 && (
-                            <InputDetail info={cinfo} />
+                        {currentStep == StepName.SelectPerson && (
+                            <PreDetail 
+                                startInput={startInput} 
+                                currentDate={currentDate} 
+                                setCurrentStep={setCurrentStep}
+                                completedList = {completedList}
+                                setCompletedList={setCompletedList}
+                            />
                         )}
-                    </Style.Content>
-                </Style.Main>
+                        {currentStep == StepName.InputInfo && (
+                            <InputDetail 
+                                personInfo={currentPersonInfo} 
+                                setCurrentStep={setCurrentStep}
+                                completedList = {completedList}
+                                setCompletedList={setCompletedList}
+                            />
+
+                        )}
+                        {/* <a href="/">ABCD</a> */}
+                    {/* </Style.Content>
+                </Style.Main> */}
             </Layout>
-        </Style.Container>
+        </div>
     )
 }
 export default Manager

@@ -1,23 +1,39 @@
 import React,{useState,useEffect,useMemo} from "react"
 import { Style } from "./PreDetail.styles"
 import * as Crud from "../Crud"
+import {
+    ScreenCenterDiv,
+    ManagerScreenRow,
+    StyledButton,
+    StyledInput,
+    StyledSelect,
+    StyledButton2,
+    StyledInputItem,
+    StyleInputLabel
 
-function PreDetail({start}){
-    const [currentDate,setCurrentDate] = useState("")
-    const [department,setDepartment] = useState([
-        {
-            name:'Fluffer',
-            roles:[]
-        },
-        {
-            name:'Industrial',
-            roles:[]
-        },
-        {
-            name:'Production',
-            roles:[]
-        },
-    ])
+} from '../../../Utils/UtilComponents'
+import {
+    SelectPersonPart,
+    HumanInfoPart,
+    HumanAvatar,
+    HumanAvatarName,
+    HumanCompletedSpan,
+    ActionPart,
+    ManagerCompletedTable,
+    ManagerCompletedTableHeader,
+    ManagerCompletedTableItem,
+    ManagerCompletedTableRow
+} from '../../../Utils/ManagerPage'
+import {StepName} from '../Constant'
+
+function PreDetail({
+        startInput,
+        currentDate,
+        setCurrentStep,
+        completedList,
+        setCompletedList
+    }){
+    const [department,setDepartment] = useState([])
     const [currentDepartmentName,setCurrentDepartmentName] = useState("")
     const [roleList,setRoleList] = useState([])
     const [currentRoleName,setCurrentRoleName] = useState("")
@@ -27,25 +43,36 @@ function PreDetail({start}){
     const [currentPerson,setCurrentPerson] = useState({})
 
    
+    const [isCompleted,setIsCompleted] = useState(false)
+
     useEffect(async ()=>{
-        console.log(currentDate)
+        //console.log(currentDate)
         if(currentDate != ""){
-            let result = await Crud.getDaySchedule(currentDate);          
-            let deparmenttemp = [
-                {
-                    name:'Fluffer',
-                    roles:result.filter(item=>item.department=="Fluffer")
-                },
-                {
-                    name:'Industrial',
-                    roles:result.filter(item=>item.department=="Industrial")
-                },
-                {
-                    name:'Production',
-                    roles:result.filter(item=>item.department=="Production")
-                },
-            ]
+            let result = await Crud.getDaySchedule(currentDate);  
+            console.log(result)
+            let departments = []
+            let deparmenttemp = []
+            for(let i = 0;i < result.length;i++){
+                if(departments.indexOf(result[i].department) == -1){
+                    departments = [
+                        ...departments,
+                        result[i].department
+                    ]
+                    deparmenttemp = [
+                        ...deparmenttemp,
+                        {
+                            name:result[i].department,
+                            roles:result.filter(item=>item.department==result[i].department)        
+                        }
+                    ]
+                }
+            }
+         
             setDepartment(deparmenttemp);
+
+            let completedListTemp = await Crud.getCompletedList(currentDate);
+            console.log(completedListTemp)
+            setCompletedList(completedListTemp)
         }
     },[currentDate])
 
@@ -96,33 +123,28 @@ function PreDetail({start}){
             let currnetPersonTemp = personList.filter(person=> `${person.first_name}_${person.last_name}` == currentPersonName)[0]
             // console.log(currnetPersonTemp)
             setCurrentPerson(currnetPersonTemp)
+            
+            if(completedList.filter(person=>`${person.first_name}_${person.last_name}` == currentPersonName).length == 0){
+                setIsCompleted(false)
+            }else
+            {
+                setIsCompleted(true)
+            }
         }
     },[currentPersonName])
     return(
-        <Style.Container>
-            <Style.Header>
-                <h1>Select Information</h1>
-            </Style.Header>
-            <Style.Content>
+        <ScreenCenterDiv>
+            <ManagerScreenRow>
+                <h1>Select Person</h1><small>{currentDate}</small>
+            </ManagerScreenRow>
+            <ManagerScreenRow>
                 <div className="row justify-space-around">
-                    <Style.InputPart>
-                        <Style.InputItem>
-                            <Style.InputLabel>
-                                Date:
-                            </Style.InputLabel>
-                            <Style.Input 
-                                type="date"
-                                value={currentDate}
-                                onChange={(e) => {
-                                    setCurrentDate(e.target.value)
-                                }}
-                            />
-                        </Style.InputItem>
-                        <Style.InputItem>
-                            <Style.InputLabel>
+                    <SelectPersonPart>
+                        <StyledInputItem>
+                            <StyleInputLabel>
                                 Deparment:
-                            </Style.InputLabel>
-                            <Style.Select
+                            </StyleInputLabel>
+                            <StyledSelect
                                 value={currentDepartmentName}
                                 onChange={(e) => {
                                     setCurrentDepartmentName(e.target.value);
@@ -133,13 +155,13 @@ function PreDetail({start}){
                                         <option key={index} value={depart.name}>{depart.name}</option>
                                     )    
                                 })}
-                            </Style.Select>
-                        </Style.InputItem>
-                        <Style.InputItem>
-                            <Style.InputLabel>
+                            </StyledSelect>
+                        </StyledInputItem>
+                        <StyledInputItem>
+                            <StyleInputLabel>
                                 Roles:
-                            </Style.InputLabel>
-                            <Style.Select
+                            </StyleInputLabel>
+                            <StyledSelect
                                  value={currentRoleName}
                                  onChange={(e) => {
                                      setCurrentRoleName(e.target.value);
@@ -150,16 +172,17 @@ function PreDetail({start}){
                                             <option key={index} value={role}>{role}</option>
                                         )    
                                 })}
-                            </Style.Select>
-                        </Style.InputItem>
-                        <Style.InputItem>
-                            <Style.InputLabel>
+                            </StyledSelect>
+                        </StyledInputItem>
+                        <StyledInputItem>
+                            <StyleInputLabel>
                                 Persons:
-                            </Style.InputLabel>
-                            <Style.Select
+                            </StyleInputLabel>
+                            <StyledSelect
                                 value={currentPersonName}
                                 onChange={(e) => {
                                     setCurrentPersonName(e.target.value);
+                                   
                                 }}
                             >
                                 {personList.map((person,index)=>{
@@ -167,21 +190,73 @@ function PreDetail({start}){
                                         <option key={index} value={`${person.first_name}_${person.last_name}`}>{`${person.first_name} ${person.last_name}`}</option>
                                     )    
                                 })}
-                            </Style.Select>
-                        </Style.InputItem>
-                    </Style.InputPart>
-                    <Style.StartPart>
-                        <Style.StartButton
-                            onClick={()=>{
-                                start(currentPerson)
-                            }}
-                        >
-                            Start
-                        </Style.StartButton>
-                    </Style.StartPart>
+                            </StyledSelect>
+                        </StyledInputItem>
+                    </SelectPersonPart>
+                    <HumanInfoPart>
+                        <HumanAvatar src="/human.png"/>
+                        <HumanAvatarName>
+                            {currentPersonName}
+                            {isCompleted && (
+                                <HumanCompletedSpan>
+                                {` (Completed)`}
+                                </HumanCompletedSpan>
+                            )}
+                        </HumanAvatarName>
+                    </HumanInfoPart>
                 </div>
-            </Style.Content>
-        </Style.Container>
+               
+            </ManagerScreenRow>
+            <ManagerScreenRow>
+                <div className="row justify-space-around">
+                    <StyledButton2 onClick={()=>{
+                        setCurrentStep(StepName.CreateDay)
+                    }} style={{minWidth:'150px'}}>Back</StyledButton2>
+                    <StyledButton2 style={{minWidth:'150px'}} onClick={()=>{
+                            if(currentPersonName != "")
+                            {
+                                if(!isCompleted){
+                                    /*
+                                    setCompletedList([
+                                        ...completedList,
+                                        currentPerson
+                                    ])
+                                    */
+                                    startInput(currentPerson)
+                                }else{
+                                    alert("He is already completed")
+                                }                            
+                            }else{
+                                alert("Select Person")
+                            }
+                        }}>Start</StyledButton2>
+                </div>
+            </ManagerScreenRow>
+            {
+                completedList.length > 0 && (
+                    <ManagerScreenRow>
+                        <h2>Completed</h2>
+                        <ManagerCompletedTable>
+                            <ManagerCompletedTableHeader>
+                                <ManagerCompletedTableItem>Department</ManagerCompletedTableItem>
+                                <ManagerCompletedTableItem>Role</ManagerCompletedTableItem>
+                                <ManagerCompletedTableItem>Person</ManagerCompletedTableItem>
+                             </ManagerCompletedTableHeader>
+                             {completedList.map((item,index)=>{
+                                 return(
+                                    <ManagerCompletedTableRow key={index}>
+                                        <ManagerCompletedTableItem>{item.department}</ManagerCompletedTableItem>
+                                        <ManagerCompletedTableItem>{item.role}</ManagerCompletedTableItem>
+                                        <ManagerCompletedTableItem>{`${item.first_name} ${item.last_name}`}</ManagerCompletedTableItem>
+                                    </ManagerCompletedTableRow>
+                                 )
+                             })}
+                        </ManagerCompletedTable>
+                    </ManagerScreenRow>            
+                )
+            }
+            
+        </ScreenCenterDiv>
     )
 }
 export default PreDetail
